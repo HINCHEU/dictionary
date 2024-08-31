@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app">
+        <input type="button" name="" id="" @click="get()">
+        {{data}}
+    </div>
+
+</body>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    const { createApp } = Vue
+    //https://fakestoreapi.com/products
+    createApp({
+        created() {
+            alert(23)
+        },
+        data() {
+            return {
+                data: []
+            }
+        },
+        methods: {
+            get() {
+                let api_url = "https://fakestoreapi.com/products"
+                let vm = this
+                // Make a request for a user with a given ID
+                axios.get(api_url)
+                    .then(function (response) {
+                        // handle success
+                        vm.data = response.data
+
+                        //console.log(response.data);
+                    })
+                    .catch(function (error) {
+                        // handle error
+                        console.log(error);
+                    })
+            }
+        }
+    }).mount('#app')
+</script>
+
+</html>

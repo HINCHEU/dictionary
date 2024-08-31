@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dictionary</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/js/all.min.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <div class="bg-gray-50">
+            <div class="max-w-screen-lg mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
+                <h1 class="text-4xl font-bold text-teal-400 text-center mb-6">Dictionary</h1>
+
+                <div class="flex justify-center mb-6">
+                    <input type="text" v-model="searchQuery" placeholder="Search"
+                        class="w-full max-w-xs px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400"
+                        @keyup.enter="getWord">
+                </div>
+
+                <div class="space-y-4" v-if="Dictionary.length">
+                    <div v-for="(item, index) in Dictionary" :key="'a'+index" class="text-lg">
+                        <h2 :class="getWordClass(item.meanings[0].partOfSpeech)" class="text-2xl font-bold">
+                            {{ item.word }}
+                        </h2>
+                        <hr class="text-bold">
+                        <div v-for="(phonetic, pIndex) in item.phonetics" :key="'p'+pIndex" class="mt-2">
+                            <p v-if="phonetic.text"><strong>Phonetic:</strong> {{ phonetic.text }}</p>
+                            <button v-if="phonetic.audio" @click="playAudio(phonetic.audio)"
+                                class="text-teal-500 hover:underline">
+                                <i class="fas fa-volume-up"></i>
+                            </button>
+                        </div>
+                        <div v-for="(meaning, mIndex) in item.meanings" :key="'m'+mIndex" class="mt-2">
+                            <p :class="getPartOfSpeechClass(meaning.partOfSpeech)">
+                                <strong>{{ meaning.partOfSpeech }}</strong>
+                            </p>
+                            <ul>
+                                <li v-for="(definition, dIndex) in meaning.definitions" :key="'d'+dIndex">
+                                    {{ definition.definition }}
+                                </li>
+                            </ul>
+                            <hr>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="Dictionary.length === 0" class="text-center text-gray-500">
+                    No results found. Try searching for a different word.
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
+    crossorigin="anonymous"></script>
+<script
+    src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js"></script>
+
+<script>
+    const { createApp } = Vue
+
+    createApp({
+        data() {
+            return {
+                Dictionary: [],
+                searchQuery: ''
+            }
+        },
+        methods: {
+            getWord() {
+                if (!this.searchQuery) return;
+
+                let api_url = `https://api.dictionaryapi.dev/api/v2/entries/en/${this.searchQuery}`
+                let vm = this
+                $.LoadingOverlay("show");
+
+                axios.get(api_url)
+                    .then(function (response) {
+                        vm.Dictionary = response.data
+                        $.LoadingOverlay("hide");
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                        vm.Dictionary = [];
+                        $.LoadingOverlay("hide");
+                    })
+            },
+            playAudio(audioUrl) {
+                let audio = new Audio(audioUrl);
+                audio.play();
+            },
+            getPartOfSpeechClass(partOfSpeech) {
+                switch (partOfSpeech) {
+                    case 'noun':
+                        return 'text-green-500';
+                    case 'verb':
+                        return 'text-blue-500';
+                    case 'adverb':
+                        return 'text-purple-500';
+                    case 'adjective':
+                        return 'text-orange-500';
+                    default:
+                        return 'text-black';
+                }
+            },
+            getWordClass(partOfSpeech) {
+                return this.getPartOfSpeechClass(partOfSpeech);
+            }
+        }
+    }).mount('#app')
+</script>
+
+</html>
