@@ -36,7 +36,7 @@
                 <div class="flex justify-center mb-6 relative">
                     <input type="text" v-model="searchQuery" placeholder="Search"
                         class="w-full max-w-xs px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400"
-                        @keyup="matchHistory" @keyup.enter="getWord">
+                        @keyup="matchHistory" @keyup.enter="getWord" v-on:keypress="isLetter($event)">
                     <button
                         class="ml-3 text-teal-500 hover:text-teal-700 transform transition-all duration-200 ease-in-out"
                         @click="toggleHistory"
@@ -211,6 +211,7 @@
                 const dropdown = this.$el.querySelector('.absolute');
                 if (dropdown && !dropdown.contains(event.target) && !event.target.closest('button')) {
                     this.showHistory = false;
+                    this.rotateClockwise = false
                 }
             },
             deleteHistory(index) {
@@ -224,6 +225,11 @@
                     timer: 600,
                     buttons: false
                 });
+            },
+            isLetter(e) {
+                let char = String.fromCharCode(e.keyCode); // Get the character
+                if (/^[A-Za-z]+$/.test(char)) return true; // Match with regex 
+                else e.preventDefault(); // If not match, don't add to input text
             }
         },
         computed: {
