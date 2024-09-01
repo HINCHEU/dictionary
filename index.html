@@ -12,14 +12,38 @@
 <body>
     <div id="app">
         <div class="bg-gray-50">
-            <div class="max-w-screen-lg mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
+            <div class="max-w-screen-lg mx-auto mt-5
+             p-6 bg-white shadow-md rounded-lg">
                 <h1 class="text-4xl font-bold text-teal-400 text-center mb-6">Dictionary</h1>
 
-                <div class="flex justify-center mb-6">
+                <div class="flex justify-center mb-6 relative">
                     <input type="text" v-model="searchQuery" placeholder="Search"
                         class="w-full max-w-xs px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400"
-                        @keyup.enter="getWord">
+                        @keyup="matchHistory" @keyup.enter="getWord">
+                    <button
+                        class="ml-3 text-teal-500 hover:text-teal-700 transform transition-all duration-200 ease-in-out"
+                        @click="toggleHistory" :class="{ 'rotate-45': rotate }">
+                        <i class="fa-solid fa-clock-rotate-left hover:scale-110 transition-transform duration-200"></i>
+                    </button>
+
+                    <!-- Wrapper to center the dropdown -->
+                    <div class="absolute top-full left-0 mt-2 w-full flex justify-center z-10">
+                        <!-- Dropdown list for search history -->
+                        <div v-if="showHistory"
+                            class="w-full max-w-xs bg-white border rounded-md shadow-lg overflow-auto"
+                            style="max-height: 30vh;">
+                            <ul>
+                                <li v-for="(word, index) in filteredHistory" :key="index"
+                                    @click="searchQuery = word; getWord()"
+                                    class="cursor-pointer px-4 py-2 hover:bg-gray-100">
+                                    {{ word }}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
+
+
 
                 <div class="space-y-4" v-if="Dictionary.length">
                     <div v-for="(item, index) in Dictionary" :key="'a'+index" class="text-lg">
@@ -62,6 +86,9 @@
     crossorigin="anonymous"></script>
 <script
     src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/3.0.5/js.cookie.js"
+    integrity="sha512-F/dia2jKME12jwqiYDayeD+Rr/8jTWUD2wfbuJB0bzSwenSEnXsn4qQ/wVyXUCix5bmCAj8xJdtFr2OqUtjLAw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script>
     const { createApp } = Vue
@@ -70,11 +97,22 @@
         data() {
             return {
                 Dictionary: [],
-                searchQuery: ''
+                searchQuery: '',
+                rotate: false,
+                searchHistory: [],  // To store the search history
+                showHistory: false, // To toggle the history dropdown
             }
+        },
+        mounted() {
+            this.loadSearchHistory();  // Load search history on app start
+            document.addEventListener('click', this.handleClickOutside);
+        },
+        beforeUnmount() {
+            document.removeEventListener('click', this.handleClickOutside);
         },
         methods: {
             getWord() {
+                this.showHistory = false
                 if (!this.searchQuery) return;
 
                 let api_url = `https://api.dictionaryapi.dev/api/v2/entries/en/${this.searchQuery}`
@@ -83,14 +121,25 @@
 
                 axios.get(api_url)
                     .then(function (response) {
-                        vm.Dictionary = response.data
+                        vm.Dictionary = response.data;
                         $.LoadingOverlay("hide");
+
+                        if (vm.Dictionary.length !== 0) {
+                            vm.addToSearchHistory(vm.searchQuery);
+                        }
+                        vm.searchQuery = ''
+
                     })
                     .catch(function (error) {
                         console.log(error);
                         vm.Dictionary = [];
                         $.LoadingOverlay("hide");
-                    })
+                    });
+
+            },
+            matchHistory() {
+                // Show the dropdown if there are matches
+                this.showHistory = this.filteredHistory.length > 0;
             },
             playAudio(audioUrl) {
                 let audio = new Audio(audioUrl);
@@ -112,9 +161,37 @@
             },
             getWordClass(partOfSpeech) {
                 return this.getPartOfSpeechClass(partOfSpeech);
+            },
+            addToSearchHistory(word) {
+                if (!this.searchHistory.includes(word)) {
+                    this.searchHistory.push(word);
+                    Cookies.set('searchHistory', this.searchHistory, { expires: 7 });
+                }
+            },
+            loadSearchHistory() {
+                const history = Cookies.get('searchHistory');
+                if (history) {
+                    this.searchHistory = history.split(',');
+                }
+            },
+            toggleHistory() {
+                this.showHistory = !this.showHistory;
+            },
+            handleClickOutside(event) {
+                const dropdown = this.$el.querySelector('.absolute');
+                if (dropdown && !dropdown.contains(event.target) && !event.target.closest('button')) {
+                    this.showHistory = false;
+                }
+            }
+        },
+        computed: {
+            filteredHistory() {
+                // Filter the search history based on the search query
+                return this.searchHistory.filter(word => word.toLowerCase().includes(this.searchQuery.toLowerCase()));
             }
         }
     }).mount('#app')
+
 </script>
 
 </html>
