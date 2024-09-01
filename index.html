@@ -7,6 +7,24 @@
     <title>Dictionary</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/js/all.min.js"></script>
+    <style>
+        .rotate-60 {
+            transform: rotate(60deg);
+        }
+
+        .rotate--60 {
+            transform: rotate(-60deg);
+        }
+
+        .fa-trash-can:hover {
+            transform: scale(1.2);
+            /* Increases size by 20% */
+            transition: transform 0.2s ease-in-out;
+            /* Smooth transition */
+        }
+    </style>
+
+    </style>
 </head>
 
 <body>
@@ -22,9 +40,11 @@
                         @keyup="matchHistory" @keyup.enter="getWord">
                     <button
                         class="ml-3 text-teal-500 hover:text-teal-700 transform transition-all duration-200 ease-in-out"
-                        @click="toggleHistory" :class="{ 'rotate-45': rotate }">
+                        @click="toggleHistory"
+                        :class="{ 'rotate-60': rotateClockwise, 'rotate--60': !rotateClockwise }">
                         <i class="fa-solid fa-clock-rotate-left hover:scale-110 transition-transform duration-200"></i>
                     </button>
+
 
                     <!-- Wrapper to center the dropdown -->
                     <div class="absolute top-full left-0 mt-2 w-full flex justify-center z-10">
@@ -34,16 +54,17 @@
                             style="max-height: 30vh;">
                             <ul>
                                 <li v-for="(word, index) in filteredHistory" :key="index"
-                                    @click="searchQuery = word; getWord()"
                                     class="cursor-pointer px-4 py-2 hover:bg-gray-100">
-                                    {{ word }}
+                                    <span @click="searchQuery = word; getWord()">{{ word }}</span>
+                                    <span class="float-right " @click="deleteHistory(index)">
+                                        <i class="fa-solid fa-trash-can "></i>
+                                    </span>
                                 </li>
+
                             </ul>
                         </div>
                     </div>
                 </div>
-
-
 
                 <div class="space-y-4" v-if="Dictionary.length">
                     <div v-for="(item, index) in Dictionary" :key="'a'+index" class="text-lg">
@@ -72,8 +93,11 @@
                     </div>
                 </div>
 
-                <div v-if="Dictionary.length === 0" class="text-center text-gray-500">
+                <div v-if="!Dictionary.length && !first_load" class="text-center text-gray-500">
                     No results found. Try searching for a different word.
+                </div>
+                <div v-if="first_load" class="text-center text-gray-500">
+                    Try to search some words
                 </div>
             </div>
         </div>
@@ -89,6 +113,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/3.0.5/js.cookie.js"
     integrity="sha512-F/dia2jKME12jwqiYDayeD+Rr/8jTWUD2wfbuJB0bzSwenSEnXsn4qQ/wVyXUCix5bmCAj8xJdtFr2OqUtjLAw=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
 
 <script>
     const { createApp } = Vue
@@ -101,6 +127,8 @@
                 rotate: false,
                 searchHistory: [],  // To store the search history
                 showHistory: false, // To toggle the history dropdown
+                first_load: true,
+                rotateClockwise: false
             }
         },
         mounted() {
@@ -113,6 +141,8 @@
         methods: {
             getWord() {
                 this.showHistory = false
+                this.first_load = false
+                this.rotateClockwise = false
                 if (!this.searchQuery) return;
 
                 let api_url = `https://api.dictionaryapi.dev/api/v2/entries/en/${this.searchQuery}`
@@ -176,12 +206,25 @@
             },
             toggleHistory() {
                 this.showHistory = !this.showHistory;
+                this.rotateClockwise = !this.rotateClockwise;
             },
             handleClickOutside(event) {
                 const dropdown = this.$el.querySelector('.absolute');
                 if (dropdown && !dropdown.contains(event.target) && !event.target.closest('button')) {
                     this.showHistory = false;
                 }
+            },
+            deleteHistory(index) {
+                this.searchHistory.splice(index, 1);
+                // Update the cookie
+                Cookies.set('searchHistory', this.searchHistory.join(','), { expires: 7 });
+                swal({
+                    title: "Success!",
+                    text: "You deleted sucessfuly!",
+                    icon: "success",
+                    timer: 600,
+                    buttons: false
+                });
             }
         },
         computed: {
