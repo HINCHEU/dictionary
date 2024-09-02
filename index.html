@@ -19,9 +19,7 @@
 
         .fa-trash-can:hover {
             transform: scale(1.2);
-            /* Increases size by 20% */
             transition: transform 0.2s ease-in-out;
-            /* Smooth transition */
         }
     </style>
 </head>
@@ -72,11 +70,12 @@
                         </h2>
                         <hr class="text-bold">
                         <div v-for="(phonetic, pIndex) in item.phonetics" :key="'p'+pIndex" class="mt-2">
-                            <p v-if="phonetic.text"><strong>Phonetic:</strong> {{ phonetic.text }}</p>
+                            <p v-if="phonetic.audio"><strong>Phonetic:</strong> {{ phonetic.text }}</p>
                             <button v-if="phonetic.audio" @click="playAudio(phonetic.audio)"
                                 class="text-teal-500 hover:underline">
-                                <i class="fas fa-volume-up"></i>
+                                <i class="fas fa-volume-up text-3xl"></i>
                             </button>
+
                         </div>
                         <div v-for="(meaning, mIndex) in item.meanings" :key="'m'+mIndex" class="mt-2">
                             <p :class="getPartOfSpeechClass(meaning.partOfSpeech)">
@@ -90,9 +89,19 @@
                             </ul>
                             <hr>
                         </div>
+                        <div v-if="item.sourceUrls" class="mt-2">
+                            <p> <strong>source:</strong></p>
+                            <div v-for="(source, sIndex) in item.sourceUrls" :key="'m'+sIndex">
+                                <ul>
+                                    <li>
+                                        {{source}}
+                                    </li>
+                                </ul>
+                            </div>
+
+                        </div>
                     </div>
                 </div>
-
                 <div v-if="!Dictionary.length && !first_load" class="text-center text-gray-500">
                     No results found. Try searching for a different word.
                 </div>
