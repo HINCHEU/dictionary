@@ -82,9 +82,10 @@
                             <p :class="getPartOfSpeechClass(meaning.partOfSpeech)">
                                 <strong>{{ meaning.partOfSpeech }}</strong>
                             </p>
+                            <p class="text-red-600">definition</p>
                             <ul>
-                                <li v-for="(definition, dIndex) in meaning.definitions" :key="'d'+dIndex">
-                                    {{ definition.definition }}
+                                <li v-for="(definition, dIndex) in meaning.definitions" :key="'d'+dIndex" class="ml-5">
+                                    - {{ definition.definition }}
                                 </li>
                             </ul>
                             <hr>
